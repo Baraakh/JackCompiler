@@ -139,7 +139,6 @@ public:
 
 	~CompilationEngine()
 	{
-		delete _jackTokenizer;
 		if (_outputFile.is_open()) _outputFile.close();
 	}
 

@@ -1,14 +1,12 @@
 #include <iostream>
-#include "JackTokenizer.h"
-#include "CompilationEngine.h"
+#include "JackAnalyzer.h"
 
 using namespace std;
 
 int main()
 {
-	
-	JackTokenizer* jackTokenizer = new JackTokenizer("fileName.jack");
-	CompilationEngine compilationEngine(jackTokenizer, "fileName.xml");
+
+	JackAnalyzer jackAnalyzer("");
 
 	return 0;
 }
