@@ -130,6 +130,8 @@
     <ClCompile Include="JackCompiler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CompilationEngine.h" />
+    <ClInclude Include="JackAnalyzer.h" />
     <ClInclude Include="JackTokenizer.h" />
     <ClInclude Include="utilities.h" />
   </ItemGroup>
