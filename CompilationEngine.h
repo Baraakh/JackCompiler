@@ -66,6 +66,65 @@ class CompilationEngine
 		return true;
 	}
 
+	void _compileTermInternal()
+	{
+		switch (_jackTokenizer->tokenType())
+		{
+		case KEYWORD:
+			if (!(_eat("true") || _eat("false") || _eat("null") || _eat("this"))) throw "Error keyword: Current token does not equal expected token.";
+			break;
+		case IDENTIFIER:
+
+			// more here must be added (varName | varName[expression] | subroutineCall)
+
+			_outputFile << "<identifier> " + _jackTokenizer->identifier() + " </identifier>" << endl;
+			_jackTokenizer->advance();
+
+			if (_jackTokenizer->tokenType() == TokenType::SYMBOL)
+			{
+				if (_jackTokenizer->symbol() == '[')
+				{
+					if (!_eat("[")) throw "Error symbol: Current token does not equal expected token.";
+
+					CompileExpression();
+
+					if (!_eat("]")) throw "Error symbol: Current token does not equal expected token.";
+				}
+				else if (_jackTokenizer->symbol() == '(' || _jackTokenizer->symbol() == '.')
+				{
+					if (_jackTokenizer->symbol() == '.')
+					{
+						_eat(".");
+						_outputFile << "<identifier> " + _jackTokenizer->identifier() + " </identifier>" << endl;
+						_jackTokenizer->advance();
+					}
+
+					if (!_eat("(")) throw "Error symbol: Current token does not equal expected token.";
+
+					CompileExpressionList();
+
+					if (!_eat(")")) throw "Error symbol: Current token does not equal expected token.";
+				}
+			}
+
+			break;
+		case INT_CONST:
+			_outputFile << "<integerConstant> " + to_string(_jackTokenizer->intVal()) + " </integerConstant>" << endl;
+			_jackTokenizer->advance();
+			break;
+		case STRING_CONST:
+			_outputFile << "<stringConstant> " + _jackTokenizer->stringVal() + " </stringConstant>" << endl;
+			_jackTokenizer->advance();
+			break;
+		case SYMBOL:
+			CompileExpression();
+			break;
+		default:
+			throw "Error expression: Current expression is not defined.";
+			break;
+		}
+	}
+
 public:
 
 	CompilationEngine(JackTokenizer* inputFile, string outputFile)
@@ -494,8 +553,29 @@ public:
 	{
 		_outputFile << "<expression>" << endl; // open expression tage
 
-		CompileTerm();
+		while(true)
+		{
+			CompileTerm();
 
+			if (_jackTokenizer->tokenType() == TokenType::SYMBOL)
+			{
+				if (_jackTokenizer->symbol() == '+') _eat("+");
+				else if (_jackTokenizer->symbol() == '-') _eat("-");
+				else if (_jackTokenizer->symbol() == '*') _eat("*");
+				else if (_jackTokenizer->symbol() == '/') _eat("/");
+				else if (_jackTokenizer->symbol() == '&') _eat("&");
+				else if (_jackTokenizer->symbol() == '|') _eat("|");
+				else if (_jackTokenizer->symbol() == '<') _eat("<");
+				else if (_jackTokenizer->symbol() == '>') _eat(">");
+				else if (_jackTokenizer->symbol() == '=') _eat("=");
+				else break;
+			}
+			else
+			{
+				break;
+			}	
+		}
+		
 		_outputFile << "</expression>" << endl; // close expression tage
 	}
 
@@ -503,29 +583,22 @@ public:
 	{
 		_outputFile << "<term>" << endl; // open term tage
 
-		switch (_jackTokenizer->tokenType())
+		if (_jackTokenizer->tokenType() == TokenType::SYMBOL && _jackTokenizer->symbol() == '(')
 		{
-		case KEYWORD:
-			if (!(_eat("true") || _eat("false") || _eat("null") || _eat("this"))) throw "Error keyword: Current token does not equal expected token.";
-			break;
-		case IDENTIFIER:
+			if (!_eat("(")) throw "Error symbol: Current token does not equal expected token.";
 
-			// more here must be added
+			CompileExpression();
 
-			_outputFile << "<identifier> " + _jackTokenizer->identifier() + " </identifier>" << endl;
-			_jackTokenizer->advance();
-			break;
-		case INT_CONST:
-			_outputFile << "<integerConstant> " + to_string(_jackTokenizer->intVal()) + " </integerConstant>" << endl;
-			_jackTokenizer->advance();
-			break;
-		case STRING_CONST:
-			_outputFile << "<stringConstant> " + _jackTokenizer->stringVal() + " </stringConstant>" << endl;
-			_jackTokenizer->advance();
-			break;
-		default:
-			throw "Error expression: Current expression is not defined.";
-			break;
+			if (!_eat(")")) throw "Error symbol: Current token does not equal expected token.";
+		}
+		else if (_jackTokenizer->tokenType() == TokenType::SYMBOL && (_jackTokenizer->symbol() == '-' || _jackTokenizer->symbol() == '~'))
+		{
+			if (!(_eat("-") || _eat("~"))) throw "Error symbol: Current token does not equal expected token.";
+			CompileTerm();
+		}
+		else
+		{
+			_compileTermInternal();
 		}
 
 		_outputFile << "</term>" << endl; // close term tage
